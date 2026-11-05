@@ -9,14 +9,45 @@ const Export = (() => {
   const LISTS = ["units.json", "stats.json", "skills.json", "skill_fx.json", "projectiles.json"];
   const j = (o) => JSON.stringify(o, null, 1);   // 跟網站的清單檔一樣用 1 格縮排
 
-  // 讀網站現在的 custom/ 清單（不用快取，拿最新的）
+  /* 讀現在的 custom/ 清單（合併的基準）
+     優先讀 GitHub repo 最新 commit（剛 commit 的角色也讀得到）；讀不到才退回網站上公開的檔案（可能慢幾分鐘）。
+     回傳 { lists, missing, src: "repo"／"site", commit, ids, sig }：sig＝清單內容的指紋，上傳前確認用。 */
   async function siteLists() {
-    const out = {}, missing = [];
+    const out = {}, missing = [], commit = await IO.latestCommit();
+    let src = commit ? "repo" : "site";
+    const one = async (n) => {
+      if (commit) { const v = await IO.fetchRepoJson(commit.sha, "custom/" + n); if (v === undefined) throw 0; return v; }
+      const r = await fetch(IO.url("custom/" + n), { cache: "no-store" }); if (!r.ok) throw 0; return r.json();
+    };
     await Promise.all(LISTS.map(async (n) => {
-      try { const r = await fetch(IO.url("custom/" + n), { cache: "no-store" }); if (!r.ok) throw 0; out[n] = await r.json(); }
-      catch { out[n] = n === "units.json" ? [] : {}; missing.push(n); }
+      try { out[n] = await one(n); } catch { out[n] = n === "units.json" ? [] : {}; missing.push(n); }
     }));
-    return { lists: out, missing };
+    const ids = out["units.json"].map((r) => r.id);
+    return { lists: out, missing, src, commit, ids, sig: await fingerprint(out) };
+  }
+  // 清單內容的指紋（SHA-256 前 12 碼）：內容一樣，指紋就一樣
+  async function fingerprint(lists) {
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(LISTS.map((n) => JSON.stringify(lists[n])).join("\n")));
+    return [...new Uint8Array(buf)].slice(0, 6).map((b) => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  /* 上傳前確認：重新讀一次，跟匯出時用的比。回傳 { same, now, added, removed, changed } */
+  async function verify(old) {
+    const now = await siteLists();
+    if (now.sig === old.sig) return { same: true, now };
+    const id = Store.P.unit.id;
+    const added = now.ids.filter((x) => !old.ids.includes(x) && x !== id), removed = old.ids.filter((x) => !now.ids.includes(x) && x !== id);
+    const changed = [];
+    for (const n of LISTS) {
+      const a = old.lists[n], b = now.lists[n];
+      const keys = Array.isArray(b) ? b.map((r) => r.id) : Object.keys(b || {});
+      for (const k of keys) {
+        if (k === id || added.includes(k)) continue;
+        const va = Array.isArray(a) ? a.find((r) => r.id === k) : a && a[k], vb = Array.isArray(b) ? b.find((r) => r.id === k) : b[k];
+        if (JSON.stringify(va) !== JSON.stringify(vb) && !changed.includes(k)) changed.push(k);
+      }
+    }
+    return { same: false, now, added, removed, changed };
   }
 
   /* 整理出這隻角色要寫的每一筆資料與檔案 */
@@ -84,6 +115,8 @@ const Export = (() => {
     else add("ok", "id 沒有跟網站上的角色重複");
     const n = B.others["units.json"].length;
     add("ok", `清單檔已跟網站現有內容合併：保留其他 ${n} 隻（${B.others["units.json"].join("、") || "無"}）`);
+    if (site.src === "repo") add("ok", `合併基準：repo 最新 commit ${site.commit.sha.slice(0, 7)}（${new Date(site.commit.date).toLocaleString("zh-TW")}「${site.commit.msg}」）`);
+    else add("warn", "讀不到 GitHub repo（可能超過每小時查詢上限或離線），改用網站上公開的檔案合併：剛 commit 不久的角色可能還沒算進去，上傳前請按「上傳前確認」");
     if (site.missing.length) add("warn", `網站上還沒有 ${site.missing.join("、")}，會新建`);
     if (m && m[2] && !p.unit.hidden) add("fail", `${id} 是召喚物／變形外觀（名字有 sk），units.json 要加 "hidden": true（「基本資料」最下面的開關）`);
     else if (p.unit.hidden) add("ok", `有 "hidden": true（不會出現在選角清單）`);
@@ -104,7 +137,7 @@ const Export = (() => {
     if (body) {
       add(Object.values(B.meta.parts).every((pt) => Object.values(pt.animations).every((a) => a.frames.length === a.frame_count)) ? "ok" : "fail", "每段動畫的 frames 數量等於 frame_count");
       for (const need of ["idle", "attack"]) if (!body.animations[need]) add("fail", `本體沒有 ${need} 動畫（必要）`);
-      if (p.autoAnim) add("warn", "動作還是靜止的基本姿勢（階段 3 做動畫）。可以先上傳測試，格鬥場選得到");
+      if (p.autoAnim) add("warn", "動作還是靜止的基本姿勢（到「動畫」分頁做動作）。可以先上傳測試，格鬥場選得到");
     }
     add(p.images.thum140 ? "ok" : "fail", p.images.thum140 ? `有頭像 ${id}-thum-140.png` : "沒有頭像 <id>-thum-140.png（「部件」最下面上傳或從預覽擷取）");
     if (B.entries["stats.json"].fight) add("warn", `stats.json 有手寫格鬥場數值 "fight"（${Object.keys(B.entries["stats.json"].fight).join("、")}），不會照公式平衡`);
@@ -134,6 +167,10 @@ const Export = (() => {
     fs.sk.forEach((o, s) => lines.push(o ? `- 技能 ${s + 1}：${Fight.FORM_LABEL[o.form]}・傷害 ${o.dmg}・冷卻 ${o.cd.toFixed(1)} 秒` : `- 技能 ${s + 1}：沒有`));
     const icon = { ok: "✅", warn: "⚠️", fail: "❌" };
     lines.push("", "### 自動檢查", "", ...checks.map(([l, m]) => `- ${icon[l]} ${m}`), "");
+    lines.push("### 合併基準（上傳前確認用）", "",
+      `- 來源：${site.src === "repo" ? `GitHub repo ${IO.REPO} commit ${site.commit.sha.slice(0, 7)}（${new Date(site.commit.date).toLocaleString("zh-TW")}）` : "網站上公開的檔案"}`,
+      `- 當時的角色（${site.ids.length} 隻）：${site.ids.join("、") || "無"}`, `- 清單指紋：${site.sig}`, "",
+      "上傳前在編輯器按「上傳前確認」：指紋一樣才上傳；不一樣代表 repo 在匯出後有變動，請重新匯出。", "");
     lines.push("### 上傳方式", "", "把解壓縮出來的 custom 資料夾整個拖進網站 repo（ranger-kichiku）的 Add file → Upload files（放在 repo 根目錄），同名檔案會被取代。", "");
     return lines.join("\n");
   }
@@ -186,6 +223,7 @@ const Export = (() => {
         el("ul", { class: "checks" }, checks.map(([l, m]) => el("li", { class: l }, [el("span", { class: "ck" }, icon[l]), el("span", {}, m)]))),
         fails ? el("p", { class: "bad" }, `有 ${fails} 項沒通過，先修好再上傳（還是可以下載來看）。`) : el("p", { class: "ok" }, "全部通過，可以上傳。"),
       ]),
+      verifyCard(site),
       el("section", { class: "card" }, [
         el("h3", {}, "方法一：下載 zip（電腦）"),
         el("p", { class: "help" }, `解壓縮後是 custom/ 資料夾，清單檔已經是「網站現有內容＋${B.id}」合併好的完整檔。到網站的 repo（ranger-kichiku，不是編輯器的 repo），把整個 custom 資料夾拖進 Add file → Upload files 即可，別的角色不會被蓋掉。zip 裡另外附一份「變更說明」。`),
@@ -217,5 +255,22 @@ const Export = (() => {
     );
   }
 
-  return { render, build, check, siteLists, get last() { return last; } };
+  /* 「上傳前確認」卡片 */
+  function verifyCard(site) {
+    const out = el("div", { class: "verify-out", "aria-live": "polite" });
+    const btn = el("button", { class: "btn", onclick: () => busy("正在比對 repo 現況…", async () => {
+      const r = await verify(site);
+      if (r.same) { out.className = "verify-out good"; out.textContent = `✓ 跟匯出時一樣（指紋 ${site.sig}），可以放心上傳。`; return; }
+      const list = (a) => (a.length ? a.join("、") : "無");
+      out.className = "verify-out bad";
+      out.replaceChildren(el("b", {}, "✕ repo 在你匯出後有變動，現在上傳會蓋掉這些變動："),
+        el("ul", {}, [el("li", {}, `新增的角色：${list(r.added)}`), el("li", {}, `移除的角色：${list(r.removed)}`), el("li", {}, `內容有改的角色：${list(r.changed)}`)]),
+        el("button", { class: "btn small", onclick: render }, "用最新的內容重新匯出"));
+    }) }, "上傳前確認");
+    return el("section", { class: "card" }, [el("h3", {}, "上傳前確認"),
+      el("p", { class: "help" }, `匯出時讀到 ${site.ids.length} 隻角色（指紋 ${site.sig}）。真正上傳前按一下，確認 repo 在這段時間沒有被改過；如果有，重新匯出就會把新的內容合併進來。`),
+      el("div", { class: "row-actions" }, [btn]), out]);
+  }
+
+  return { render, build, check, siteLists, verify, get last() { return last; } };
 })();

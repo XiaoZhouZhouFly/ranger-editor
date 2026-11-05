@@ -7,6 +7,10 @@
 const IO = (() => {
   const qBase = new URLSearchParams(location.search).get("base");
   const SITE_URL = "https://xiaozhouzhoufly.github.io/ranger-kichiku/";
+  /* 匯出合併用：網站的 GitHub repo。直接讀 repo 最新 commit 的檔案，不用等 GitHub Pages 更新。
+     網址加 ?repo=off 可以關掉（改用網站上公開的檔案）。 */
+  const REPO = new URLSearchParams(location.search).get("repo") || document.documentElement.dataset.repo || "XiaoZhouZhouFly/ranger-kichiku";
+  const BRANCH = "main";
   let base = qBase || document.documentElement.dataset.base || SITE_URL;
   if (!base.endsWith("/")) base += "/";
   const cache = new Map();
@@ -76,5 +80,23 @@ const IO = (() => {
     };
   }
 
-  return { get base() { return base; }, url, fetchJson, fetchGzJson, fetchBlob, customIndex, officialIndex, loadCharacter };
+  /* repo 最新 commit：{ sha, date, msg } 或 null（離線、超過 GitHub 每小時 60 次的查詢上限、或 ?repo=off） */
+  async function latestCommit() {
+    if (!REPO || REPO === "off") return null;
+    try {
+      const r = await fetch(`https://api.github.com/repos/${REPO}/commits/${BRANCH}`, { cache: "no-store", headers: { Accept: "application/vnd.github+json" } });
+      if (!r.ok) return null;
+      const j = await r.json();
+      return { sha: j.sha, date: j.commit && j.commit.committer && j.commit.committer.date, msg: j.commit && j.commit.message ? j.commit.message.split("\n")[0] : "" };
+    } catch { return null; }
+  }
+  // 讀某個 commit 的檔案（有 sha 的網址內容固定，不會讀到舊的快取）
+  async function fetchRepoJson(sha, path) {
+    const r = await fetch(`https://raw.githubusercontent.com/${REPO}/${sha}/${path}`, { cache: "no-store" });
+    if (r.status === 404) return undefined;
+    if (!r.ok) throw new Error(`${path}：${r.status}`);
+    return r.json();
+  }
+
+  return { get base() { return base; }, REPO, latestCommit, fetchRepoJson, url, fetchJson, fetchGzJson, fetchBlob, customIndex, officialIndex, loadCharacter };
 })();

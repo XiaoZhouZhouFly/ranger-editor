@@ -279,8 +279,8 @@ const Parts = (() => {
         sliderRow({ label: "上下位置", min: -250, max: 50, step: 1, digits: 0, get: () => (selectedPose() || {}).y || 0, set: (v) => setPose("y", v), help: "0 是地面，往上是負數。" }),
       ] : [];
       box.append(el("section", { class: "card" }, [
-        el("div", { class: "skill-head" }, [el("h3", {}, "組裝基本姿勢"), el("span", { class: "pill" }, "動作在階段 3 做")]),
-        el("p", { class: "help" }, "拖曳部件擺好位置，這就是角色站著的樣子。現在所有動作（待機、普攻、技能…）都先用這個姿勢，格鬥場已經可以選。"),
+        el("div", { class: "skill-head" }, [el("h3", {}, "組裝基本姿勢"), el("span", { class: "pill" }, "下一步：動畫分頁")]),
+        el("p", { class: "help" }, "拖曳部件擺好位置，這就是角色站著的樣子。組好後到「動畫」分頁開始做動作（可以套用自動動作範本）。"),
         el("div", { class: "pose-wrap" }, [cv, el("div", { class: "pose-side" }, q ? [el("b", {}, partLabel(pt.images[selected].name)), ...selRows] : [el("p", { class: "help" }, "還沒有部件。")])]),
       ]));
       bindPose(cv); drawPose();
@@ -308,7 +308,7 @@ const Parts = (() => {
     box.append(el("section", { class: "card" }, [
       el("div", { class: "skill-head" }, [el("h3", {}, `部件（${pt.images.length}）`), info ? el("span", { class: "pill" + (info.tooBig ? " badp" : "") }, `拼接圖 ${info.w}×${info.h}`) : null]),
       group === "body" && auto ? el("p", { class: "help" }, "清單上面的畫在最前面。建議由後往前：披風 → 遠側手 → 遠側腳 → 近側腳 → 上身 → 頭 → 近側手。腳要被衣服蓋住，遠側手在身體後面。") :
-        group === "body" ? el("p", { class: "help" }, "這隻已經有動畫：可以換圖、改中心點；新增、刪除部件與調整圖層在階段 3 的動畫編輯做。") : null,
+        group === "body" ? el("p", { class: "help" }, "這隻已經有動畫：可以換圖、改中心點、上傳新部件；新部件要到「動畫」分頁用「加圖層」放進動作裡。") : null,
       tools, list,
       info && info.tooBig ? el("p", { class: "bad" }, "拼接圖超過 2048×2048，部分手機可能顯示不出來。請把部件縮小（「編輯」→ 輸出縮放）。") : null,
     ]));

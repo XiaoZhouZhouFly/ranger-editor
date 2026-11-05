@@ -21,7 +21,7 @@ const Editor = (() => {
     $("#charId").textContent = P.unit.id;
     // 手機底部的摘要列
     $("#mini").innerHTML = `<div><span>體力</span><b>${fsCache.hp}</b></div><div><span>減傷</span><b>${Math.round(fsCache.dr * 100)}%</b></div><div><span>走路</span><b>${fsCache.walk}</b></div><div><span>普攻</span><b>${fsCache.atk.dmg}</b></div>`;
-    if (what === "all" || what === "meta" || what === "images") loadPreview();
+    if (what === "all" || what === "meta" || what === "images" || what === "anim") loadPreview();
     // 新角色還沒有動畫：技能開關變了，靜止動作的清單也要跟著變
     if (what === "skill" && P.autoAnim && P.meta.parts.body.images.length) { Parts.autoAnimate("body"); loadPreview(); }
   }
@@ -72,7 +72,10 @@ const Editor = (() => {
       $$(".tabs button").forEach((x) => x.setAttribute("aria-selected", x === b));
       $$(".tab").forEach((t) => (t.hidden = t.id !== "tab-" + b.dataset.tab));
       try { localStorage.setItem("rk-editor-tab", b.dataset.tab); } catch {}
+      document.body.classList.toggle("wide", b.dataset.tab === "anim");   // 動畫分頁用整個寬度
+      if (b.dataset.tab !== "anim") AnimUI.stop();
       if (Store.P && b.dataset.tab === "parts") Parts.render();
+      if (Store.P && b.dataset.tab === "anim") AnimUI.render();
       if (Store.P && b.dataset.tab === "export") Export.render();
     }));
     let t = null; try { t = localStorage.getItem("rk-editor-tab"); } catch {}
@@ -84,6 +87,7 @@ const Editor = (() => {
     const cur = $(".tabs button[aria-selected=true]");
     if (cur && cur.dataset.tab === "parts") Parts.render();
     if (cur && cur.dataset.tab === "export") Export.render();
+    if (cur && cur.dataset.tab === "anim") AnimUI.render();
   }
 
   /* ---- 開啟角色（起始畫面） ---- */

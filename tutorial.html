@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>角色圖片教學</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chiron+GoRound+TC:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="css/editor.css">
+<style>
+  .doc { max-width: 880px; margin: 0 auto; padding-block: 24px 60px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 18px; }
+  .doc p, .doc li { max-width: 66ch; }
+  .doc h2 { font-size: 1.3rem; margin-top: 10px; }
+  .doc table { border-collapse: collapse; font-size: 0.9rem; min-width: 520px; }
+  .doc td, .doc th { border-bottom: 1px solid var(--line); padding: 6px 10px; text-align: left; vertical-align: top; }
+  .tbl { overflow-x: auto; }
+  .fig { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+  .fig svg { width: 100%; max-width: 100%; height: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+  .fig figcaption { font-size: 0.82rem; color: var(--muted); margin-top: 4px; }
+  .fig figure { margin: 0; }
+  .s-ink { stroke: var(--ink); } .f-ink { fill: var(--ink); } .f-acc { fill: var(--accent); } .s-acc { stroke: var(--accent); }
+  .f-a { fill: #c9b6f2; } .f-b { fill: #f2c9a0; } .f-c { fill: #d9483b; } .f-d { fill: #4a5a7a; } .f-e { fill: #9aa5b8; }
+  .toc { display: flex; flex-wrap: wrap; gap: 6px; }
+  .toc a { color: var(--ink); text-decoration: none; border: 1px solid var(--line); background: var(--surface); padding: 3px 12px; border-radius: 999px; font-size: 0.85rem; }
+  .out-json { width: 100%; min-height: 140px; }
+  .atlas-prev { max-width: 100%; background: repeating-conic-gradient(var(--chk-a) 0 25%, var(--chk-b) 0 50%) 0 0 / 16px 16px; border-radius: 8px; border: 1px solid var(--line); }
+  .tips li { margin-bottom: 4px; }
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="brand"><b>角色圖片教學</b><span>Ranger 角色編輯器</span></div>
+  <div class="who"></div>
+  <div class="bar-actions"><a class="btn" href="index.html">回到編輯器</a></div>
+</header>
+<main class="doc">
+  <nav class="toc" aria-label="目錄">
+    <a href="#rules">圖片規則</a><a href="#cut">怎麼切部件</a><a href="#pivot">中心點</a><a href="#layers">圖層與動作</a><a href="#tool-fix">工具：整理圖片</a><a href="#tool-atlas">工具：自動拼圖</a>
+  </nav>
+
+  <section class="card" id="rules">
+    <h2>圖片規則</h2>
+    <div class="tbl"><table>
+      <tr><th>用途</th><th>格式</th><th>建議尺寸</th><th>說明</th></tr>
+      <tr><td>部件（頭、身體、手腳、武器…）</td><td>透明背景 PNG</td><td>整隻角色站起來約 120～250 px 高</td><td>同一隻角色的部件用同一個比例畫。網站會自動把角色縮放成固定身高，所以只要比例對就好。</td></tr>
+      <tr><td>拼接圖（atlas）</td><td>PNG</td><td>不超過 2048×2048</td><td>編輯器會自動把部件拼成一張，部件之間留 2px 空白，避免邊緣滲色。</td></tr>
+      <tr><td>頭像</td><td>透明背景 PNG</td><td>140×140</td><td>角色庫、選角、搜尋結果都用它。</td></tr>
+      <tr><td>技能圖標</td><td>PNG</td><td>128×128 正方形</td><td>格鬥場技能按鈕用；不放的話按鈕顯示文字。</td></tr>
+    </table></div>
+    <p>手上的圖是白底或有背景色？用下面的「整理圖片」工具點背景就能去掉，再裁掉多餘的透明邊。</p>
+  </section>
+
+  <section class="card" id="cut">
+    <h2>怎麼切部件</h2>
+    <p>每個會動的部位分開存一張圖。最常見的是 7～9 塊：</p>
+    <ol class="tips">
+      <li><b>頭</b>（五官可以畫在頭上，也可以分開成一塊；分開的話，五官只畫在皮膚上，被瀏海蓋住的部分自然看不到）</li>
+      <li><b>上身</b>（身體、衣服）</li>
+      <li><b>近側手、遠側手</b>（靠近畫面的那隻、在身體後面的那隻）</li>
+      <li><b>近側腳、遠側腳</b></li>
+      <li><b>武器、披風、特效</b>（有的話）</li>
+    </ol>
+    <p>切的時候，關節處多留一點重疊（例如手臂上端多畫一截藏在衣服下），轉動時才不會露出縫。不會動的角色也可以只有一張圖。</p>
+  </section>
+
+  <section class="card" id="pivot">
+    <h2>中心點是什麼</h2>
+    <p>中心點就是部件旋轉時繞著轉的那一點，像關節。設錯的話，揮手會變成整隻手在空中打轉。</p>
+    <div class="fig">
+      <figure>
+        <svg viewBox="0 0 240 170" role="img" aria-label="手臂的中心點在肩膀">
+          <rect x="70" y="30" width="24" height="70" rx="8" class="f-b s-ink" stroke-width="1.5"/>
+          <rect x="70" y="30" width="24" height="70" rx="8" class="f-b s-ink" stroke-width="1.5" opacity="0.45" transform="rotate(-50 82 38)"/>
+          <circle cx="82" cy="38" r="5" class="f-acc"/><path d="M70 38h24M82 26v24" class="s-acc" stroke-width="2"/>
+          <text x="120" y="42" class="f-ink" font-size="12">中心點在肩膀</text><text x="120" y="60" class="f-ink" font-size="12">→ 揮手很自然</text>
+          <text x="12" y="150" class="f-ink" font-size="11">半透明的是轉 50 度後的樣子</text>
+        </svg>
+        <figcaption>手、腳、披風：中心點放上端（編輯器的「上中」）。</figcaption>
+      </figure>
+      <figure>
+        <svg viewBox="0 0 240 170" role="img" aria-label="頭的中心點在脖子">
+          <rect x="60" y="30" width="70" height="62" rx="18" class="f-b s-ink" stroke-width="1.5"/>
+          <rect x="60" y="30" width="70" height="62" rx="18" class="f-b s-ink" stroke-width="1.5" opacity="0.45" transform="rotate(15 95 88)"/>
+          <circle cx="95" cy="88" r="5" class="f-acc"/><path d="M83 88h24M95 76v24" class="s-acc" stroke-width="2"/>
+          <text x="145" y="60" class="f-ink" font-size="12">中心點在脖子</text><text x="145" y="78" class="f-ink" font-size="12">→ 點頭、歪頭</text>
+          <text x="12" y="150" class="f-ink" font-size="11">頭：「下中」；武器：握把的位置</text>
+        </svg>
+        <figcaption>頭：中心點放下方（「下中」）。武器：放在手握的地方。</figcaption>
+      </figure>
+    </div>
+    <p>在編輯器的「部件」分頁，每個部件都有「中心點」按鈕，點一下圖就能設定，也有常用位置的快捷鍵。</p>
+  </section>
+
+  <section class="card" id="layers">
+    <h2>圖層順序與做動作的注意事項</h2>
+    <div class="fig">
+      <figure>
+        <svg viewBox="0 0 240 200" role="img" aria-label="圖層由後往前">
+          <rect x="88" y="40" width="64" height="88" rx="10" class="f-a"/>
+          <rect x="74" y="56" width="16" height="50" rx="6" class="f-b s-ink" stroke-width="1"/>
+          <rect x="100" y="120" width="16" height="50" rx="6" class="f-d"/><rect x="122" y="120" width="16" height="50" rx="6" class="f-d s-ink" stroke-width="1"/>
+          <rect x="96" y="70" width="48" height="58" rx="8" class="f-c"/>
+          <rect x="90" y="20" width="60" height="54" rx="16" class="f-b s-ink" stroke-width="1"/>
+          <rect x="148" y="56" width="16" height="50" rx="6" class="f-b s-ink" stroke-width="1"/>
+          <g class="f-ink" font-size="10"><text x="6" y="34">1 披風</text><text x="6" y="70">2 遠側手</text><text x="6" y="150">3 遠側腳</text><text x="170" y="150">4 近側腳</text><text x="170" y="112">5 上身</text><text x="170" y="34">6 頭</text><text x="170" y="70">7 近側手</text></g>
+        </svg>
+        <figcaption>數字小的先畫（在後面），數字大的蓋在上面。</figcaption>
+      </figure>
+    </div>
+    <ul class="tips">
+      <li>由後往前：燕尾／披風 → 遠側手 → 遠側腳 → 近側腳 → 上身 → 頭 → 近側手。腳要被衣服蓋住，遠側手在身體後面。</li>
+      <li>武器跟著手走，但不要跟著身體縮放而變形；放技能時武器要留在原本那一側，不能瞬間換手。</li>
+      <li>舉手的動作不要擋到臉；手舉過肩時，可以讓那隻手畫在頭後面。</li>
+      <li>空手不要完全貼在身體上，平常稍微往外張開，看起來比較自然。</li>
+      <li>普攻的命中格放在動畫大約一半的位置（格鬥場就是在一半出手）。</li>
+      <li>待機動畫決定角色大小和站位：腳底要在最下面。</li>
+    </ul>
+  </section>
+
+  <section class="card" id="tool-fix">
+    <h2>工具：整理圖片（裁切、縮放、去背）</h2>
+    <p>選一張圖，可以點背景去掉、拖框裁切、縮放，完成後下載成透明背景 PNG。要直接放進角色的話，在編輯器「部件」分頁每個部件的「編輯」也是同一個工具。</p>
+    <div class="row-actions">
+      <label class="btn filebtn"><input type="file" class="vh" id="fixIn" accept="image/*">選一張圖</label>
+      <label class="btn ghost filebtn"><input type="file" class="vh" id="avaIn" accept="image/*">做 140×140 頭像</label>
+      <label class="btn ghost filebtn"><input type="file" class="vh" id="icoIn" accept="image/*">做 128×128 技能圖標</label>
+    </div>
+    <div id="fixOut" class="row-actions"></div>
+  </section>
+
+  <section class="card" id="tool-atlas">
+    <h2>工具：自動拼圖（atlas）</h2>
+    <p>一次選好所有部件 PNG，會拼成一張圖，並算出每塊的位置（<code>sprites</code>）和預設中心點（<code>images</code>，在圖的正中間）。在編輯器裡上傳部件會自動做這件事，這個工具是給想手動檢查或自己寫檔案的人用。</p>
+    <div class="row-actions"><label class="btn filebtn"><input type="file" class="vh" id="atIn" accept="image/png,image/*" multiple>選部件 PNG（可多選）</label></div>
+    <div id="atOut" style="display:flex;flex-direction:column;gap:10px"></div>
+  </section>
+</main>
+<div id="toasts" class="toasts"></div>
+<script src="js/util.js"></script>
+<script src="js/atlas.js"></script>
+<script src="js/imgtools.js"></script>
+<script src="js/tutorial.js"></script>
+</body>
+</html>

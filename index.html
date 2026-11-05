@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ranger 角色編輯器</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chiron+GoRound+TC:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="css/editor.css">
+</head>
+<body>
+<!-- 「Ranger 惡搞工坊」粉絲角色編輯器（非官方）。程式說明見 README.md -->
+<header class="bar">
+  <div class="brand"><b>Ranger 角色編輯器</b><span>惡搞工坊・非官方</span></div>
+  <div class="who"><span id="charName">—</span><span id="charId" class="mono"></span></div>
+  <div class="bar-actions"><span id="saveState" class="save"></span><a class="btn ghost-inv" href="tutorial.html" target="_blank" rel="noopener">教學與圖片工具</a><button id="openBtn" class="btn">開啟角色</button></div>
+</header>
+
+<main class="layout">
+  <section class="stage" aria-label="預覽">
+    <div class="canvas-wrap">
+      <canvas id="cv" aria-label="角色動畫預覽"></canvas>
+      <div id="thumb" class="thumb" title="頭像"></div>
+    </div>
+    <div class="clips" id="clips"></div>
+    <div class="transport">
+      <button id="playBtn" class="btn small">暫停</button>
+      <input id="scrub" type="range" min="0" max="0" value="0" aria-label="影格">
+      <span id="frameNo" class="mono frame-no">—</span>
+    </div>
+    <div class="view-opts">
+      <label>速度 <input id="speed" type="range" min="0.1" max="2" step="0.1" value="1"> <output id="speedOut">×1</output></label>
+      <label>縮放 <input id="zoom" type="range" min="0.4" max="2" step="0.05" value="1"></label>
+      <label>背景 <select id="bgSel"><option value="checker">透明格</option><option value="#ffffff">白</option><option value="#1b1f2a">黑</option><option value="#00b140">綠幕</option></select></label>
+    </div>
+    <section class="result" aria-labelledby="resTitle">
+      <h2 id="resTitle">在格鬥場會變成</h2>
+      <div id="result"></div>
+    </section>
+  </section>
+
+  <section class="panel">
+    <nav class="tabs" role="tablist">
+      <button role="tab" data-tab="basic">基本資料</button>
+      <button role="tab" data-tab="stats">數值</button>
+      <button role="tab" data-tab="skills">技能</button>
+      <button role="tab" data-tab="parts">部件</button>
+      <button role="tab" data-tab="export">匯出</button>
+      <button role="tab" data-tab="soon" class="soon">接下來</button>
+    </nav>
+    <div class="tab" id="tab-basic"></div>
+    <div class="tab" id="tab-stats"></div>
+    <div class="tab" id="tab-skills"></div>
+    <div class="tab" id="tab-parts"></div>
+    <div class="tab" id="tab-export"></div>
+    <div class="tab" id="tab-soon">
+      <section class="card"><h3>接下來的階段</h3>
+        <ol class="plan">
+          <li><b>階段 3</b>：動畫時間軸與關鍵影格（電腦操作為主）</li>
+          <li><b>階段 4</b>：技能效果清單與投射物</li>
+          <li><b>階段 5</b>：完整匯出、合併網站清單、自動檢查</li>
+        </ol>
+      </section>
+    </div>
+  </section>
+</main>
+
+<div id="mini" class="mini" aria-hidden="true"></div>
+
+<!-- 起始畫面：選要做哪一隻 -->
+<div id="picker" class="picker" hidden>
+  <div class="picker-box" role="dialog" aria-modal="true" aria-labelledby="pickTitle">
+    <div class="picker-head"><h2 id="pickTitle">要做哪一隻？</h2><button id="closePick" class="btn ghost" aria-label="關閉">✕</button></div>
+    <div class="starts">
+      <button id="newBtn" class="start"><b>從零開始</b><span>空白的新角色，數值是官方的平均值</span></button>
+      <button id="resumeBtn" class="start" hidden><b>接續上次</b><span></span></button>
+    </div>
+    <p id="pickBusy" class="busy" hidden></p>
+    <h3>自製角色 <small>修改後覆蓋原本那隻</small></h3>
+    <div id="customList" class="picks"></div>
+    <h3>官方角色 <small>改完另存成新的自製角色</small></h3>
+    <input id="offSearch" type="search" placeholder="搜尋名稱或 id，例如：莎莉、u021u" aria-label="搜尋官方角色">
+    <div id="officialList" class="picks"></div>
+  </div>
+</div>
+<div id="toasts" class="toasts"></div>
+
+<script src="js/util.js"></script>
+<script src="js/fx-table.js"></script>
+<script src="js/fight-calc.js"></script>
+<script src="js/io.js"></script>
+<script src="js/state.js"></script>
+<script src="js/render.js"></script>
+<script src="js/ui-controls.js"></script>
+<script src="js/ui-basic.js"></script>
+<script src="js/atlas.js"></script>
+<script src="js/zip.js"></script>
+<script src="js/imgtools.js"></script>
+<script src="js/parts.js"></script>
+<script src="js/export.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
